@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>تهنئة خاصة</title>
+  <style>
+    :root{--bg:#0f1724;--card:#0b1220;--accent:#ff4568;--muted:#9aa4b2}
+    *{box-sizing:border-box;font-family: 'Segoe UI', Tahoma, system-ui, sans-serif}
+    body{margin:0;min-height:100vh;background:linear-gradient(180deg,#071021 0%, #071522 60%), var(--bg);color:#e6eef6;display:flex;align-items:center;justify-content:center;padding:20px}
+    .wrap{width:100%;max-width:720px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:14px;padding:20px;box-shadow:0 8px 30px rgba(2,6,23,0.8)}
+    header{display:flex;align-items:center;gap:12px}
+    h1{margin:0;font-size:20px}
+    p.lead{color:var(--muted);margin-top:6px}
+    .card{background:var(--card);padding:18px;border-radius:12px;margin-top:16px}
+    .center{display:flex;align-items:center;justify-content:center}
+    button{background:linear-gradient(90deg,var(--accent),#ff7aa0);border:0;color:white;padding:10px 14px;border-radius:9px;font-weight:600;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06)}
+    .puzzle{margin-top:14px}
+    .options{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+    .option-btn{padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:rgba(255,255,255,0.02);text-align:center;cursor:pointer}
+    .option-btn.correct{outline:3px solid rgba(0,255,150,0.14)}
+    .pieces{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
+    .piece{width:70px;height:70px;border-radius:12px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));display:flex;align-items:center;justify-content:center;opacity:0.14;transition:all .6s}
+    .piece.show{opacity:1;transform:translateY(-6px);box-shadow:0 6px 20px rgba(0,0,0,0.5)}
+    .final{margin-top:16px;text-align:center}
+    .big-heart{display:none;margin-top:18px}
+    .big-heart.show{display:block}
+    .heart{width:180px;height:160px;margin:0 auto;background:transparent;position:relative}
+    .heart:before,.heart:after{content:"";position:absolute;width:120px;height:190px;border-radius:60px 60px 0 0;top:0;background:var(--accent);transform:rotate(-45deg);transform-origin:0 100%}
+    .heart:after{transform:rotate(45deg);right:0;left:auto;transform-origin:100% 100%}
+    .heart .pulse{position:absolute;inset:-4px;border-radius:50%;opacity:0.8}
+    @keyframes beat{0%{transform:scale(1)}25%{transform:scale(1.08)}50%{transform:scale(1)}75%{transform:scale(1.08)}100%{transform:scale(1)}}
+    .heart.animate{animation:beat 1s infinite}
+    .message{margin-top:12px;font-size:18px}
+    footer.small{margin-top:18px;font-size:13px;color:var(--muted)}
+    @media (max-width:420px){.piece{width:60px;height:60px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div style="width:56px;height:56px;border-radius:12px;background:linear-gradient(180deg,#111827,#0b1220);display:flex;align-items:center;justify-content:center;font-weight:700">❤</div>
+      <div>
+        <h1 id="title">تهنئة خاصة</h1>
+        <p class="lead">سلسلة ألغاز صغيرة — كل لغز يكشف جزء من المفاجأة.</p>
+      </div>
+    </header>
+    <div class="card" id="mainCard">
+      <div id="stageArea"></div>
+      <div class="final" id="piecesArea">
+        <div class="pieces" id="pieces">
+          <div class="piece" id="piece1">جزء 1</div>
+          <div class="piece" id="piece2">جزء 2</div>
+          <div class="piece" id="piece3">جزء 3</div>
+          <div class="piece" id="piece4">جزء 4</div>
+        </div>
+      </div>
+      <div class="big-heart" id="finalHeart">
+        <div class="heart" id="heartSVG"><div class="pulse"></div></div>
+        <div class="message" id="finalMessage">—</div>
+        <div style="margin-top:12px">
+          <button id="playAudioBtn" class="ghost">تشغيل الموسيقى</button>
+        </div>
+      </div>
+      <footer class="small"></footer>
+    </div>
+  </div>
+  <script>
+    const herName = "فجر";
+    const puzzle1 = {
+      q: "أول لعبة لعبناها سوى؟",
+      options: ["فورتنايت", "روبلوكس", "دبد"],
+      correctIndex: 2
+    };
+    const puzzle2 = {
+      q: "شنو كانت أول رسالة بينا؟",
+      options: ["انت الي بدبد", "سلام عليكم", "شلونك"],
+      correctIndex: 0
+    };
+    const puzzle3 = {
+      q: "شكد التاريخ يومها؟",
+      options: ["2024/12/13", "2023/12/13", "2024/11/13"],
+      correctIndex: 0
+    };
+    const puzzle4 = {
+      q: "وقت الرسالة كان؟",
+      options: ["10:18pm", "11:18pm", "12:18pm"],
+      correctIndex: 1
+    };
+    let solved = [false,false,false,false];
+    const stageArea = document.getElementById('stageArea');
+    const pieces = [
+      document.getElementById('piece1'),
+      document.getElementById('piece2'),
+      document.getElementById('piece3'),
+      document.getElementById('piece4')
+    ];
+    const finalHeart = document.getElementById('finalHeart');
+    const finalMessage = document.getElementById('finalMessage');
+    const playAudioBtn = document.getElementById('playAudioBtn');
+    let audio = new Audio("https://cdn.pixabay.com/download/audio/2022/03/28/audio_7a2bf6c7e5.mp3?filename=romantic-piano-13362.mp3");
+    playAudioBtn.addEventListener('click',()=>{audio.play();});
+    playAudioBtn.style.display='inline-block';
+    function showStart(){
+      stageArea.innerHTML = `
+        <div class="center" style="flex-direction:column;gap:12px">
+          <h2>مرحبا ${herName}</h2>
+          <p class="lead">سلسلة ألغاز صغيرة. كل ما تجاوب صح تكشف جزء من القلب.</p>
+          <button id="startBtn">نبلش</button>
+        </div>
+      `;
+      document.getElementById('startBtn').onclick = ()=>{showPuzzle(0);}
+    }
+    function showPuzzle(num){
+      const puzzles = [puzzle1,puzzle2,puzzle3,puzzle4];
+      if(num>=puzzles.length){showFinal(); return;}
+      const p = puzzles[num];
+      let optionsHtml = "";
+      p.options.forEach((opt,i)=>{optionsHtml+=`<div class="option-btn" data-i="${i}">${opt}</div>`});
+      stageArea.innerHTML = `
+        <div class="puzzle">
+          <h3>السؤال ${num+1}</h3>
+          <div>${p.q}</div>
+          <div class="options">${optionsHtml}</div>
+        </div>
+      `;
+      document.querySelectorAll('.option-btn').forEach(btn=>{
+        btn.onclick = ()=>{
+          const chosen = parseInt(btn.getAttribute('data-i'));
+          if(chosen === p.correctIndex){
+            btn.classList.add('correct');
+            solved[num]=true;
+            revealPiece(num);
+            setTimeout(()=>{showPuzzle(num+1);},800);
+          } else {
+            btn.style.opacity=0.6; btn.style.transform='translateX(4px)';
+            setTimeout(()=>{btn.style.opacity=1; btn.style.transform='';},400);
+          }
+        }
+      });
+    }
+    function revealPiece(i){
+      if(i<4){ pieces[i].classList.add('show'); }
+      const sCount = solved.filter(x=>x).length;
+      if(sCount>=4){ setTimeout(()=>{pieces[3].classList.add('show');},600); }
+    }
+    function showFinal(){
+      finalHeart.classList.add('show');
+      document.getElementById('heartSVG').classList.add('animate');
+      finalMessage.innerHTML = `كل عام وانت بخير يا احلى فجورة بالدنيا ❤️`;
+      audio.play();
+      finalHeart.scrollIntoView({behavior:'smooth',block:'center'});
+    }
+    showStart();
+  </script>
+</body>
+</html>
